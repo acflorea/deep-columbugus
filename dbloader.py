@@ -40,10 +40,17 @@ def getTextForDictionary():
 
     try:
         with connection.cursor() as cursor:
+            # fetch number of rows
+            countSQL = "SELECT count(*) FROM longdescs"
+            cursor.execute(countSQL)
+            count  = cursor.fetchone()
+            print "Found %s rows" % count['count(*)']
+
             # Load textual representation of bugs
-            sql = "SELECT thetext FROM longdescs"
+            sql = "SELECT thetext FROM longdescs limit 100"
             cursor.execute(sql)
             while cursor:
-                print cursor.fetchone()
+                print "---------------------------"
+                print cursor.fetchone()['thetext']
     finally:
         connection.close()
