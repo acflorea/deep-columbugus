@@ -29,7 +29,7 @@ def testConnection():
     finally:
         connection.close()
 
-def getTextForDictionary():
+def getTextForDictionary(limit = None):
     # Connect to the database
     connection = pymysql.connect(host='localhost',
                                  user='root',
@@ -38,19 +38,35 @@ def getTextForDictionary():
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
 
+    descriptions = []
+
     try:
         with connection.cursor() as cursor:
             # fetch number of rows
-            countSQL = "SELECT count(*) FROM longdescs"
-            cursor.execute(countSQL)
-            count  = cursor.fetchone()
-            print "Found %s rows" % count['count(*)']
+            if limit:
+                count = limit
+            else:
+                countSQL = "SELECT count(*) FROM longdescs"
+                cursor.execute(countSQL)
+                count  = cursor.fetchone()['count(*)']
+            print "Found %s rows" % count
 
-            # Load textual representation of bugs
-            sql = "SELECT thetext FROM longdescs limit 100"
-            cursor.execute(sql)
-            while cursor:
-                print "---------------------------"
-                print cursor.fetchone()['thetext']
+            # compute the necessary batches
+            batchSize = 50000
+            batches = count / batchSize + 1
+
+            print "%d batches required" % batches
+
+            for index in xrange(batches):
+                print "Processing batch %d" % index
+                # Load textual representation of bugs
+                offset = index * batchSize
+                sql = "SELECT thetext FROM longdescs limit %d, %d" % (offset, batchSize)
+                cursor.execute(sql)
+                for row in cursor:
+                    descriptions.append(row['thetext'])
+
     finally:
         connection.close()
+
+    return "\n".join(descriptions)
