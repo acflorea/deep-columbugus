@@ -71,7 +71,9 @@ def getTextForDictionary(limit = None):
                     # any other character gets replaced by a space
                     text = re.sub('[^A-Za-z \.]+', ' ', text)
                     # remove duplicate spaces
-                    text = re.sub('[ ]{2,}', ' ', text)
+                    text = re.sub('[ ]+', ' ', text)
+                    # remove any single letter words
+                    text = re.sub(' (. )+', ' ', text)
                     #  lower case
                     text = text.lower()
                     descriptions.append(text)
