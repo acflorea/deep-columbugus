@@ -1,4 +1,5 @@
 import pymysql.cursors
+import re
 
 # Connect to the database
 connection = pymysql.connect(host='localhost',
@@ -64,9 +65,21 @@ def getTextForDictionary(limit = None):
                 sql = "SELECT thetext FROM longdescs limit %d, %d" % (offset, batchSize)
                 cursor.execute(sql)
                 for row in cursor:
-                    descriptions.append(row['thetext'])
+                    text = row['thetext']
+                    # we preserve everything alhanumeric - textual description
+                    # we preserve the points and spaces
+                    # any other character gets replaced by a space
+                    text = re.sub('[^A-Za-z \.]+', ' ', text)
+                    # remove duplicate spaces
+                    text = re.sub('[ ]{2,}', ' ', text)
+                    #  lower case
+                    text = text.lower()
+                    descriptions.append(text)
 
     finally:
         connection.close()
 
-    return "\n".join(descriptions)
+    # create a string with all the descriptions
+    descriptions = "\n".join(descriptions)
+
+    return descriptions
