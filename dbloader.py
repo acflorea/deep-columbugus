@@ -6,12 +6,12 @@ import pandas as pd
 # Retrieves the bugs textual information from `longdescs`
 # The results are in the form of a dictionary {bug_id : (original_text, normalized_text)}
 # ====================================================================================================
-def getTextForDictionary(limit=None):
+def getTextForDictionary(db, limit=None):
     # Connect to the database
     connection = pymysql.connect(host='localhost',
                                  user='root',
                                  password='mysql',
-                                 db='netbeansbugs',
+                                 db=db,
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
 
@@ -43,7 +43,7 @@ def getTextForDictionary(limit=None):
                 for row in cursor:
                     bug_id = row['bug_id']
                     original_text = row['thetext']
-                    # we preserve everything alhanumeric - textual description
+                    # we preserve everything alphanumeric - textual description
                     # we preserve the points and spaces
                     # any other character gets replaced by a space
                     text = re.sub('[^A-Za-z \.]+', ' ', original_text)
@@ -54,9 +54,11 @@ def getTextForDictionary(limit=None):
                     #  lower case
                     text = text.lower()
                     if (bug_id in bug_desc):
-                        bug_desc[bug_id].append((text, original_text))
+                        newText = bug_desc[bug_id]['text'] + "\n" + text
+                        newOriginalText = bug_desc[bug_id]['original_text'] + "\n" + original_text
+                        bug_desc[bug_id] = {'text': newText, 'original_text': newOriginalText}
                     else:
-                        bug_desc[bug_id] = [(text, original_text)]
+                        bug_desc[bug_id] = {'text': text, 'original_text': original_text}
 
 
     finally:
@@ -79,15 +81,17 @@ def bugDicoToFullText(bug_descs, normalized=False):
     return fulltextdesc
 
 
-#
+# Collects a bugs dataframe with the following columns
+# ['bug_id', 'creation_ts', 'short_desc', 'bug_status', 'assigned_to', 'product_id',
+# 'component_id', 'bug_severity', 'resolution', 'delta_ts']
 #
 # ====================================================================================================
-def getBugDetails(bugIds=[]):
+def getBugDetails(db, bugIds=[], modifiedNoLaterThan='2000-01-01', withFullDescription=True):
     # Connect to the database
     connection = pymysql.connect(host='localhost',
                                  user='root',
                                  password='mysql',
-                                 db='netbeansbugs',
+                                 db=db,
                                  charset='utf8mb4',
                                  cursorclass=pymysql.cursors.DictCursor)
 
@@ -97,33 +101,39 @@ def getBugDetails(bugIds=[]):
                        "b.bug_status, ba.who as assigned_to, b.product_id, b.component_id, b.bug_severity, " \
                        "b.resolution, b.delta_ts " \
                        "FROM bugs b JOIN bugs_activity ba on b.bug_id = ba.bug_id " \
-                       "and ba.fieldid = %s " \
                        "and ba.added='FIXED' " \
+                       "JOIN fielddefs fd on fd.id = ba.fieldid and fd.name = 'resolution' " \
                        "where " + resolutionFilter("b.") + \
                        "AND b.delta_ts > %s " + \
                        "AND b.bug_id not in (select d.dupe from duplicates d) " \
-                       "ORDER by b.delta_ts"
-            cursor.execute(countSQL, ("12", "2005-01-04"))
+                       "ORDER by b.bug_id"
 
+            cursor.execute(countSQL, (modifiedNoLaterThan))
             rows_list = []
 
             print "Reading bugs data"
             index = 0
             for row in cursor:
-                if (index % 1000 == 0):
+                if (index % 10000 == 0):
                     print "Current index is %d" % index
                 data_dict = {col: row[col] for col in
-                             ['bug_id', 'creation_ts', 'short_desc', 'bug_status', 'assigned_to']}
+                             ['bug_id', 'creation_ts', 'short_desc', 'bug_status', 'assigned_to', 'product_id',
+                              'component_id', 'bug_severity', 'resolution', 'delta_ts']}
                 rows_list.append(data_dict)
                 index += 1
 
-            bug_dataframe = pd.DataFrame(rows_list)
-
+            bug_dataframe = pd.DataFrame(data=rows_list, index=[dict['bug_id'] for dict in rows_list])
 
     finally:
         connection.close()
 
-    print bug_dataframe.head(10)
+    # Complete the data frame with full bugs descriptions
+    if (withFullDescription):
+        print("Join descriptions")
+        descriptions = getTextForDictionary(db=db)
+        desc_dataframe = pd.DataFrame(data=descriptions.values(), index=descriptions.keys())
+        bug_dataframe = bug_dataframe.join(desc_dataframe)
+
     return bug_dataframe
 
 

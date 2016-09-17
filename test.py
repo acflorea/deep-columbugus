@@ -7,4 +7,7 @@ from dbloader import getTextForDictionary, bugDicoToFullText, getBugDetails
 
 # print fulltextdesc
 
-getBugDetails()
+bug_dataframe = getBugDetails('netbeansbugs')
+# bug_dataframe = getBugDetails('eclipsebugs')
+# bug_dataframe = getBugDetails('firefoxbugs_new')
+print bug_dataframe.head(10)
