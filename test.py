@@ -1,10 +1,10 @@
-from dbloader import getTextForDictionary
+from dbloader import getTextForDictionary, bugDicoToFullText, getBugDetails
 
 # retrieve descriptions from db
-descriptions = getTextForDictionary(1000)
+# bug_descs = getTextForDictionary(1000)
 
-descriptions
+# fulltextdesc = bugDicoToFullText(bug_descs)
 
-# for description in descriptions:
+# print fulltextdesc
 
-
+getBugDetails()
