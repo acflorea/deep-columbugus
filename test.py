@@ -103,7 +103,16 @@ print("Vectorized!")
 
 print("=" * 80)
 print("Train model")
-results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
-                              dual=False, tol=1e-3))
+
+results = []
+
+# results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
+#                               dual=False, tol=1e-3))
+
+# Train SGD with Elastic Net penalty
+print('=' * 80)
+print("Elastic-Net penalty")
+results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
+                                       penalty="elasticnet")))
 
 print("=" * 80)
