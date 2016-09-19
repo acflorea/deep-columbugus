@@ -79,8 +79,10 @@ def benchmark(clf):
 # fetchAndSaveDataframe(db)
 
 bug_dataframe = loadDataframe(db)
+print("=" * 80)
 print("Dataframe loaded %s" % str(bug_dataframe.shape))
 
+print("=" * 80)
 print("Test/Train split")
 train, test = train_test_split(bug_dataframe, train_size=0.8, random_state=seed)
 y_train, y_test = train.assigned_to, test.assigned_to
@@ -88,6 +90,8 @@ y_train, y_test = train.assigned_to, test.assigned_to
 print("Train is %s" % str(train.shape))
 print("Test is %s" % str(test.shape))
 
+print("=" * 80)
+print("Vectorize")
 labels = train.assigned_to
 vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
                              stop_words='english')
@@ -97,5 +101,9 @@ X_test = vectorizer.transform(test.text.astype('U'))
 
 print("Vectorized!")
 
-results = benchmark(LinearSVC(loss='l2', penalty='squared_hinge',
+print("=" * 80)
+print("Train model")
+results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
                               dual=False, tol=1e-3))
+
+print("=" * 80)
