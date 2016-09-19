@@ -6,6 +6,7 @@ from time import time
 from sklearn.svm import LinearSVC
 from sklearn import metrics
 from sklearn.utils.extmath import density
+from sklearn.linear_model import SGDClassifier
 
 # retrieve descriptions from db
 # bug_descs = getTextForDictionary(1000)
@@ -100,6 +101,8 @@ X_train = vectorizer.fit_transform(train.text.astype('U'))
 X_test = vectorizer.transform(test.text.astype('U'))
 
 print("Vectorized!")
+print("Train is %s" % str(X_train.shape))
+print("Test is %s" % str(X_test.shape))
 
 print("=" * 80)
 print("Train model")
