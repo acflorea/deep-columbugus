@@ -71,10 +71,13 @@ def benchmark(clf):
     print("confusion matrix:")
     print(metrics.confusion_matrix(y_test, pred))
 
+    print()
+    clf_descr = str(clf).split('(')[0]
+    return clf_descr, score, train_time, test_time
 
-print()
-clf_descr = str(clf).split('(')[0]
-return clf_descr, score, train_time, test_time  # fetchAndSaveDataframe(db)
+
+# fetchAndSaveDataframe(db)
+
 bug_dataframe = loadDataframe(db)
 print("Dataframe loaded %s" % str(bug_dataframe.shape))
 
