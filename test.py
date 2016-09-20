@@ -1,49 +1,11 @@
-from dbloader import getTextForDictionary, bugDicoToFullText, getBugDetails
-import pandas as pd
+from utils import loadDataframe, db, seed
+
+from time import time
+
+from sklearn import metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from time import time
 from sklearn.svm import LinearSVC
-from sklearn import metrics
-from sklearn.utils.extmath import density
-from sklearn.linear_model import SGDClassifier
-
-# retrieve descriptions from db
-# bug_descs = getTextForDictionary(1000)
-
-# fulltextdesc = bugDicoToFullText(bug_descs)
-
-# print fulltextdesc
-
-seed = 42
-
-db = 'netbeansbugs'
-
-
-# db = 'eclipsebugs'
-# db = 'firefoxbugs_new'
-
-
-#  ==========================================================
-def fetchAndSaveDataframe(db):
-    print("Database is %s" % db)
-    print("Fetching data")
-
-    bug_dataframe = getBugDetails(db)
-
-    print("Data frame fetched, here's an extract")
-    print bug_dataframe.head(10)
-
-    print('Saving dataframe')
-    bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8')
-
-    return bug_dataframe
-
-
-#  ==========================================================
-def loadDataframe(db):
-    bug_dataframe = pd.read_csv("./%s.csv" % db, encoding='utf-8', index_col=0)
-    return bug_dataframe
 
 
 ###############################################################################
@@ -109,13 +71,8 @@ print("Train model")
 
 results = []
 
-# results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
-#                               dual=False, tol=1e-3))
+results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
+                              dual=False, tol=1e-3))
 
-# Train SGD with Elastic Net penalty
-print('=' * 80)
-print("Elastic-Net penalty")
-results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet")))
 
 print("=" * 80)
