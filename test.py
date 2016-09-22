@@ -1,4 +1,4 @@
-from utils import loadDataframe, db, seed
+from utils import loadDataframe, db, seed, fetchAndSaveDataframe
 
 from time import time
 
@@ -39,7 +39,7 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-# fetchAndSaveDataframe(db)
+fetchAndSaveDataframe(db)
 
 bug_dataframe = loadDataframe(db)
 print("=" * 80)

@@ -1,18 +1,31 @@
 from utils import loadDataframe, db
 
 import os
+import csv
 
 import tensorflow as tf
 from tensorflow.models.embedding.word2vec_optimized import Options, Word2Vec
 
 # Build vocabulary file
-dataFrame = loadDataframe(db).text.astype('U')
-dataFrame.to_csv("./%s_dico.csv" % db, encoding='utf-8', index=False)
+dicoFile = "./%s_dico.csv" % db
+dataFrame = loadDataframe(db)
+dataFrame.to_csv(dicoFile,
+                 columns=['text'], encoding='utf-8', index=False,
+                 header=False)
+
+# remove quotes
+f = open(dicoFile, 'r')
+text = f.read()
+f.close()
+text = text.replace("\"", "")
+f = open(dicoFile, 'w')
+f.write(text)
+f.close()
 
 """Train a word2vec model."""
 
 opts = Options()
-opts.train_data = "%s_dico.csv" % db
+opts.train_data = dicoFile
 opts.save_path = "."
 opts.eval_data = "questions-words.txt"
 with tf.Graph().as_default(), tf.Session() as session:

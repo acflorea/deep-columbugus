@@ -46,11 +46,16 @@ def getTextForDictionary(db, limit=None):
                     # we preserve everything alphanumeric - textual description
                     # we preserve the points and spaces
                     # any other character gets replaced by a space
-                    text = re.sub('[^A-Za-z \.]+', ' ', original_text)
+                    text = re.sub('[^A-Za-z\.]+', ' ', original_text)
                     # remove duplicate spaces
                     text = re.sub('[ ]+', ' ', text)
+                    # remove boundary points
+                    text = re.sub(' \.', ' ', text)
+                    text = re.sub('\. ', ' ', text)
                     # remove any single letter words
                     text = re.sub(' (. )+', ' ', text)
+                    # remove successive points
+                    text = re.sub('(\.){2,}', '', text)
                     #  lower case
                     text = text.lower()
                     if (bug_id in bug_desc):
