@@ -65,6 +65,8 @@ bug_dataframe = bug_dataframe.replace(np.nan, '', regex=True)
 print("=" * 80)
 print("Dataframe loaded %s" % str(bug_dataframe.shape))
 
+# bug_dataframe = bug_dataframe.head(50000)
+
 # load W2V model
 opts = Options()
 opts.train_data = "%s_dico.csv" % db
@@ -90,7 +92,7 @@ with tf.Graph().as_default(), tf.Session() as session:
 
 # tf-idf
 # ((X_train, y_train), (X_test, y_test)) = TFIDF(bug_dataframe)
-((X_train, y_train), (X_test, y_test)) = vectorizeDoc(bug_dataframe[len(bug_dataframe.embeddings) > 0])
+((X_train, y_train), (X_test, y_test)) = vectorizeDoc(bug_dataframe[bug_dataframe.embeddings > 0])
 
 print("=" * 80)
 print("Train model")
