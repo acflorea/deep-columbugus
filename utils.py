@@ -33,3 +33,33 @@ def fetchAndSaveDataframe(db):
     bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8')
 
     return bug_dataframe
+
+
+#  ==========================================================
+def TFIDF(dataframe):
+
+    from sklearn.cross_validation import train_test_split
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    print("=" * 80)
+    print("Test/Train split")
+    train, test = train_test_split(dataframe, train_size=0.8, random_state=seed)
+    y_train, y_test = train.assigned_to, test.assigned_to
+
+    print("Train is %s" % str(train.shape))
+    print("Test is %s" % str(test.shape))
+
+    print("=" * 80)
+    print("Vectorize")
+    labels = train.assigned_to
+    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+                                 stop_words='english')
+
+    X_train = vectorizer.fit_transform(train.text.astype('U'))
+    X_test = vectorizer.transform(test.text.astype('U'))
+
+    print("Vectorized!")
+    print("Train is %s" % str(X_train.shape))
+    print("Test is %s" % str(X_test.shape))
+
+    return ((X_train, y_train), (X_test, y_test))

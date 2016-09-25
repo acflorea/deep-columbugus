@@ -1,11 +1,17 @@
-from utils import loadDataframe, db, seed, fetchAndSaveDataframe
+from __future__ import print_function
+from utils import loadDataframe, db, seed, fetchAndSaveDataframe, TFIDF
 
 from time import time
 
 from sklearn import metrics
-from sklearn.cross_validation import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
+
+import tensorflow as tf
+from tensorflow.models.embedding.word2vec_optimized import Options, Word2Vec
+from utils import db
+import os
+
+import numpy as np
 
 
 ###############################################################################
@@ -39,32 +45,43 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-fetchAndSaveDataframe(db)
+# fetchAndSaveDataframe(db)
+
+def Doc2Vec(row, embeddings, word2id):
+    # Retrieve word's embeddings
+    ids = [word2id.get(word, -1) for word in row.text.split()]
+    row_embeddings = [embeddings[id] for id in ids if id > -1]
+    # Compute the average of the word representations (naive approach)
+    # doc2vec = avg(word2voc)
+    return (np.asarray(row_embeddings).mean(axis=0),)
+
 
 bug_dataframe = loadDataframe(db)
+# get rid of nans
+bug_dataframe = bug_dataframe.replace(np.nan, '', regex=True)
 print("=" * 80)
 print("Dataframe loaded %s" % str(bug_dataframe.shape))
 
-print("=" * 80)
-print("Test/Train split")
-train, test = train_test_split(bug_dataframe, train_size=0.8, random_state=seed)
-y_train, y_test = train.assigned_to, test.assigned_to
+# load W2V model
+opts = Options()
+opts.train_data = "%s_dico.csv" % db
+opts.save_path = "."
+opts.eval_data = "questions-words.txt"
+modelNo = "4349991"
 
-print("Train is %s" % str(train.shape))
-print("Test is %s" % str(test.shape))
+with tf.Graph().as_default(), tf.Session() as session:
+    model = Word2Vec(opts, session)
+    model.saver.restore(session,
+                        os.path.join(opts.save_path + "/%s_model.ckpt-%s" % (db, modelNo)))
+    # get the embeddings
+    embeddings = session.run(model._w_in, {})
 
-print("=" * 80)
-print("Vectorize")
-labels = train.assigned_to
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                             stop_words='english')
+    print("Enhancing dataframe")
+    bug_dataframe['words'] = bug_dataframe.apply(Doc2Vec, args=(embeddings, model._word2id), axis=1)
+    print(bug_dataframe.head(10))
 
-X_train = vectorizer.fit_transform(train.text.astype('U'))
-X_test = vectorizer.transform(test.text.astype('U'))
-
-print("Vectorized!")
-print("Train is %s" % str(X_train.shape))
-print("Test is %s" % str(X_test.shape))
+# tf-idf
+((X_train, y_train), (X_test, y_test)) = TFIDF(bug_dataframe)
 
 print("=" * 80)
 print("Train model")
@@ -73,6 +90,5 @@ results = []
 
 results = benchmark(LinearSVC(loss='squared_hinge', penalty='l2',
                               dual=False, tol=1e-3))
-
 
 print("=" * 80)
