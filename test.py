@@ -1,5 +1,5 @@
 from __future__ import print_function
-from utils import loadDataframe, db, seed, fetchAndSaveDataframe, TFIDF
+from utils import loadDataframe, db, seed, fetchAndSaveDataframe, TFIDF, vectorizeDoc
 
 from time import time
 
@@ -12,6 +12,8 @@ from utils import db
 import os
 
 import numpy as np
+
+import pandas as pd
 
 
 ###############################################################################
@@ -53,7 +55,8 @@ def Doc2Vec(row, embeddings, word2id):
     row_embeddings = [embeddings[id] for id in ids if id > -1]
     # Compute the average of the word representations (naive approach)
     # doc2vec = avg(word2voc)
-    return (np.asarray(row_embeddings).mean(axis=0),)
+    mean = np.asarray(row_embeddings).mean(axis=0)
+    return mean.tolist()
 
 
 bug_dataframe = loadDataframe(db)
@@ -77,11 +80,17 @@ with tf.Graph().as_default(), tf.Session() as session:
     embeddings = session.run(model._w_in, {})
 
     print("Enhancing dataframe")
-    bug_dataframe['words'] = bug_dataframe.apply(Doc2Vec, args=(embeddings, model._word2id), axis=1)
+
+    bug_dataframe['embeddings'] = bug_dataframe.apply(Doc2Vec, args=(embeddings, model._word2id), axis=1)
+
+    # print('Saving dataframe')
+    # bug_dataframe.to_csv("./%s_e.csv" % db, encoding='utf-8')
+
     print(bug_dataframe.head(10))
 
 # tf-idf
-((X_train, y_train), (X_test, y_test)) = TFIDF(bug_dataframe)
+# ((X_train, y_train), (X_test, y_test)) = TFIDF(bug_dataframe)
+((X_train, y_train), (X_test, y_test)) = vectorizeDoc(bug_dataframe[len(bug_dataframe.embeddings) > 0])
 
 print("=" * 80)
 print("Train model")
