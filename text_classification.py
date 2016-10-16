@@ -28,14 +28,14 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_bool('test_with_fake_data', False,
                          'Test the example code with fake data.')
 
-MAX_DOCUMENT_LENGTH = 150
+MAX_DOCUMENT_LENGTH = 250
 EMBEDDING_SIZE = 100
 n_words = 0
 
 
-def bag_of_words_model(x, y):
+def bag_of_words_model(x, y, mode, params):
     """A bag-of-words model. Note it disregards the word order in the text."""
-    target = tf.one_hot(y, 15, 1, 0)
+    target = tf.one_hot(y, params.get("classes", 15), 1, 0)
     word_vectors = learn.ops.categorical_variable(x, n_classes=n_words,
                                                   embedding_size=EMBEDDING_SIZE, name='words')
     features = tf.reduce_max(word_vectors, reduction_indices=1)
@@ -70,7 +70,7 @@ def rnn_model(x, y, mode, params):
     # Given encoding of RNN, take encoding of last step (e.g hidden size of the
     # neural network of last step) and pass it as features for logistic
     # regression over output classes.
-    target = tf.one_hot(y, params.get("classes", 10), 1, 0)
+    target = tf.one_hot(y, params.get("classes", 15), 1, 0)
     prediction, loss = learn.models.logistic_regression(encoding, target)
 
     # Create a training op.
@@ -91,7 +91,7 @@ def main(unused_argv):
     # x_test = pandas.DataFrame(dbpedia.test.data)[1]
     # y_test = pandas.Series(dbpedia.test.target)
 
-    dataframe = loadDataframe(db).head(1000)
+    dataframe = loadDataframe(db).head(10000)
     # get rid of nans
     dataframe = dataframe.replace(np.nan, '', regex=True)
     classes = len(dataframe.assigned_to.unique())
@@ -115,7 +115,7 @@ def main(unused_argv):
     print('Total words: %d' % n_words)
 
     # Build model
-    # classifier = learn.Estimator(model_fn=bag_of_words_model)
+    # classifier = learn.Estimator(model_fn=bag_of_words_model, params={"classes": classes})
     classifier = learn.Estimator(model_fn=rnn_model, params={"classes": classes})
 
     # Train and predict

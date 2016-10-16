@@ -42,7 +42,7 @@ def getTextForDictionary(db, limit=None):
                 cursor.execute(sql)
                 for row in cursor:
                     bug_id = row['bug_id']
-                    original_text = row['thetext']
+                    original_text = re.sub('\n', ' ', row['thetext'])
                     # we preserve everything alphanumeric - textual description
                     # we preserve the points and spaces
                     # any other character gets replaced by a space
@@ -59,8 +59,8 @@ def getTextForDictionary(db, limit=None):
                     #  lower case
                     text = text.lower()
                     if (bug_id in bug_desc):
-                        newText = bug_desc[bug_id]['text'] + "\n" + text
-                        newOriginalText = bug_desc[bug_id]['original_text'] + "\n" + original_text
+                        newText = bug_desc[bug_id]['text'] + " " + text
+                        newOriginalText = bug_desc[bug_id]['original_text'] + " " + original_text
                         bug_desc[bug_id] = {'text': newText, 'original_text': newOriginalText}
                     else:
                         bug_desc[bug_id] = {'text': text, 'original_text': original_text}
