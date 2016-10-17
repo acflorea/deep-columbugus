@@ -35,7 +35,7 @@ def fetchAndSaveDataframe(db):
     bug_dataframe['class'] = pd.Series(bug_dataframe.assigned_to.map(lambda x: classes.index(x)))
 
     print('Saving dataframe')
-    bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8')
+    bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8', header=False)
 
     return bug_dataframe
 
