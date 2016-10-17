@@ -30,6 +30,10 @@ def fetchAndSaveDataframe(db):
     print("Data frame fetched, here's an extract")
     print bug_dataframe.head(10)
 
+    classes = bug_dataframe.assigned_to.unique().tolist()
+
+    bug_dataframe['class'] = pd.Series(bug_dataframe.assigned_to.map(lambda x: classes.index(x)))
+
     print('Saving dataframe')
     bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8')
 
@@ -44,14 +48,14 @@ def TFIDF(dataframe):
     print("=" * 80)
     print("Test/Train split")
     train, test = train_test_split(dataframe, train_size=0.8, random_state=seed)
-    y_train, y_test = train.assigned_to, test.assigned_to
+    y_train, y_test = train['class'], test['class']
 
     print("Train is %s" % str(train.shape))
     print("Test is %s" % str(test.shape))
 
     print("=" * 80)
     print("Vectorize")
-    labels = train.assigned_to
+    labels = train['class']
     vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
                                  stop_words='english')
 

@@ -43,6 +43,9 @@ def getTextForDictionary(db, limit=None):
                 for row in cursor:
                     bug_id = row['bug_id']
                     original_text = re.sub('\n', ' ', row['thetext'])
+                    original_text = re.sub('\r', '', original_text)
+                    original_text = re.sub('\t', ' ', original_text)
+                    original_text = re.sub(',', ' ', original_text)
                     # we preserve everything alphanumeric - textual description
                     # we preserve the points and spaces
                     # any other character gets replaced by a space
@@ -124,6 +127,12 @@ def getBugDetails(db, bugIds=[], modifiedNoLaterThan='2000-01-01', withFullDescr
                 data_dict = {col: row[col] for col in
                              ['bug_id', 'creation_ts', 'short_desc', 'bug_status', 'assigned_to', 'product_id',
                               'component_id', 'bug_severity', 'resolution', 'delta_ts']}
+                short_desc = original_text = re.sub('\n', ' ', data_dict['short_desc'])
+                short_desc = re.sub('\r', '', original_text)
+                short_desc = re.sub('\t', ' ', original_text)
+                short_desc = re.sub(',', ' ', original_text)
+
+                data_dict['short_desc'] = short_desc
                 rows_list.append(data_dict)
                 index += 1
 
