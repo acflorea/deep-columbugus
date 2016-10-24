@@ -13,6 +13,8 @@ import os
 
 import numpy as np
 
+from datetime import datetime, timedelta
+
 import pandas as pd
 
 
@@ -47,7 +49,7 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-fetchAndSaveDataframe(db)
+# fetchAndSaveDataframe(db)
 
 def Doc2Vec(row, embeddings, word2id):
     # Retrieve word's embeddings
@@ -60,6 +62,28 @@ def Doc2Vec(row, embeddings, word2id):
 
 
 bug_dataframe = loadDataframe(db)
+
+# go back in time "delta" days
+last_change = datetime.strptime(bug_dataframe['delta_ts'].max(), '%Y-%m-%d %H:%M:%S')
+oneMonthBack = (last_change + timedelta(days=-30)).strftime('%Y-%m-%d %H:%M:%S')
+twoMonthsBack = (last_change + timedelta(days=-60)).strftime('%Y-%m-%d %H:%M:%S')
+threeMonthsBack = (last_change + timedelta(days=-90)).strftime('%Y-%m-%d %H:%M:%S')
+break_at = (last_change + timedelta(days=-240)).strftime('%Y-%m-%d %H:%M:%S')
+
+oneBackSeries = bug_dataframe[bug_dataframe['delta_ts'] > oneMonthBack].groupby('assigned_to').filter(
+    lambda x: len(x) > 3).assigned_to.unique()
+twoBackSeries = bug_dataframe[
+    (bug_dataframe['delta_ts'] <= oneMonthBack) & (bug_dataframe['delta_ts'] > twoMonthsBack)].groupby(
+    'assigned_to').filter(lambda x: len(x) > 3).assigned_to.unique()
+threeBackSeries = bug_dataframe[
+    (bug_dataframe['delta_ts'] <= twoMonthsBack) & (bug_dataframe['delta_ts'] > threeMonthsBack)].groupby(
+    'assigned_to').filter(lambda x: len(x) > 3).assigned_to.unique()
+
+validAssignees = reduce(np.intersect1d, (oneBackSeries, twoBackSeries, threeBackSeries))
+
+# keep only "recent" data
+filtered = bug_dataframe[bug_dataframe['delta_ts'] > break_at]
+
 # get rid of nans
 bug_dataframe = bug_dataframe.replace(np.nan, '', regex=True)
 print("=" * 80)
