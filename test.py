@@ -79,10 +79,13 @@ threeBackSeries = bug_dataframe[
     (bug_dataframe['delta_ts'] <= twoMonthsBack) & (bug_dataframe['delta_ts'] > threeMonthsBack)].groupby(
     'assigned_to').filter(lambda x: len(x) > 3).assigned_to.unique()
 
-validAssignees = reduce(np.intersect1d, (oneBackSeries, twoBackSeries, threeBackSeries))
+validAssignees = reduce(np.intersect1d, (oneBackSeries, twoBackSeries, threeBackSeries)).tolist()
 
 # keep only "recent" data
-filtered = bug_dataframe[bug_dataframe['delta_ts'] > break_at]
+filtered = bug_dataframe[(bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(validAssignees))]
+
+print('Saving dataframe')
+filtered.to_csv("./%s_filtered.csv" % db, encoding='utf-8', header=False)
 
 # get rid of nans
 bug_dataframe = bug_dataframe.replace(np.nan, '', regex=True)
@@ -110,7 +113,7 @@ with tf.Graph().as_default(), tf.Session() as session:
     bug_dataframe['embeddings'] = bug_dataframe.apply(Doc2Vec, args=(embeddings, model._word2id), axis=1)
 
     # print('Saving dataframe')
-    # bug_dataframe.to_csv("./%s_e.csv" % db, encoding='utf-8')
+    bug_dataframe.to_csv("./%s_e.csv" % db, encoding='utf-8')
 
     print(bug_dataframe.head(10))
 

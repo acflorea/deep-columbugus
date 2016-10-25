@@ -62,11 +62,11 @@ def getTextForDictionary(db, limit=None):
                     #  lower case
                     text = text.lower()
                     if (bug_id in bug_desc):
-                        newText = bug_desc[bug_id]['text'] + " " + text
-                        newOriginalText = bug_desc[bug_id]['original_text'] + " " + original_text
+                        newText = bug_desc[bug_id]['text'] + ". " + text.strip()
+                        newOriginalText = bug_desc[bug_id]['original_text'] + " " + original_text.strip()
                         bug_desc[bug_id] = {'text': newText, 'original_text': newOriginalText}
                     else:
-                        bug_desc[bug_id] = {'text': text, 'original_text': original_text}
+                        bug_desc[bug_id] = {'text': text.strip(), 'original_text': original_text.strip()}
 
 
     finally:
