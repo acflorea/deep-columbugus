@@ -49,7 +49,7 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-# fetchAndSaveDataframe(db)
+fetchAndSaveDataframe(db)
 
 def Doc2Vec(row, embeddings, word2id):
     # Retrieve word's embeddings

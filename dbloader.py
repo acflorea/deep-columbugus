@@ -107,12 +107,12 @@ def getBugDetails(db, bugIds=[], modifiedNoLaterThan='2000-01-01', withFullDescr
         with connection.cursor() as cursor:
             countSQL = "SELECT b.bug_id, b.creation_ts, b.short_desc, " \
                        "b.bug_status, ba.who as assigned_to, b.product_id, b.component_id, b.bug_severity, " \
-                       "b.resolution, b.delta_ts " \
+                       "b.resolution, ba.bug_when as delta_ts " \
                        "FROM bugs b JOIN bugs_activity ba on b.bug_id = ba.bug_id " \
                        "and ba.added='FIXED' " \
                        "JOIN fielddefs fd on fd.id = ba.fieldid and fd.name = 'resolution' " \
                        "where " + resolutionFilter("b.") + \
-                       "AND b.delta_ts > %s " + \
+                       "AND ba.bug_when > %s " + \
                        "AND b.bug_id not in (select d.dupe from duplicates d) " \
                        "ORDER by b.bug_id"
 
