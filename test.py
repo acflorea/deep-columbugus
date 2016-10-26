@@ -49,7 +49,7 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-fetchAndSaveDataframe(db)
+# fetchAndSaveDataframe(db)
 
 def Doc2Vec(row, embeddings, word2id):
     # Retrieve word's embeddings
@@ -81,8 +81,15 @@ threeBackSeries = bug_dataframe[
 
 validAssignees = reduce(np.intersect1d, (oneBackSeries, twoBackSeries, threeBackSeries)).tolist()
 
+counts = bug_dataframe[(bug_dataframe['delta_ts'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
+    'assigned_to').assigned_to.value_counts()
+threshold = 2 * counts.std() + counts.mean()
+
+filteredValidAssignees = bug_dataframe[(bug_dataframe['delta_ts'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
+    'assigned_to').filter(lambda x: len(x) < threshold).assigned_to.unique().tolist()
+
 # keep only "recent" data
-filtered = bug_dataframe[(bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(validAssignees))]
+filtered = bug_dataframe[(bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
 
 print('Saving dataframe')
 filtered.to_csv("./%s_filtered.csv" % db, encoding='utf-8', header=False)
