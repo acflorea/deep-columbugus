@@ -49,7 +49,7 @@ def benchmark(clf):
     return clf_descr, score, train_time, test_time
 
 
-# fetchAndSaveDataframe(db)
+fetchAndSaveDataframe(db)
 
 def Doc2Vec(row, embeddings, word2id):
     # Retrieve word's embeddings
@@ -93,6 +93,8 @@ filtered = bug_dataframe[(bug_dataframe['delta_ts'] > break_at) & (bug_dataframe
 
 print('Saving dataframe')
 filtered.to_csv("./%s_filtered.csv" % db, encoding='utf-8', header=False)
+print('Saving dataframe')
+bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8', header=False)
 
 # get rid of nans
 bug_dataframe = bug_dataframe.replace(np.nan, '', regex=True)
