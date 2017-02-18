@@ -92,11 +92,13 @@ filteredValidAssignees = bug_dataframe[
     (bug_dataframe['bug_when'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
     'assigned_to').filter(lambda x: len(x) < threshold).assigned_to.unique().tolist()
 
+print('Keep ', len(filteredValidAssignees), ' out of ', len(validAssignees), ' classes.')
+
 # - repeat ?!?
 
 filtered_bug_dataframe = bug_dataframe[
     (bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
-filtered_bug_dataframe = filtered_bug_dataframe.sort('delta_ts')[0:len(filtered_bug_dataframe.index) / 10 * 9]
+filtered_bug_dataframe = filtered_bug_dataframe.sort_values('delta_ts')[0:len(filtered_bug_dataframe.index) / 10 * 9]
 
 counts = filtered_bug_dataframe \
     .groupby('assigned_to').assigned_to.value_counts()
@@ -107,11 +109,17 @@ print('Level 2 threshold ', threshold)
 filteredValidAssignees = filtered_bug_dataframe.groupby(
     'assigned_to').filter(lambda x: len(x) < threshold).assigned_to.unique().tolist()
 
+print('Keep ', len(filteredValidAssignees), ' classes.')
+
 # keep only "recent" data
 filtered = bug_dataframe[
     (bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
 
 print('Saving dataframe')
+# reorder columns and sort
+filtered = filtered.sort_values("creation_ts")[
+    ["assigned_to", "bug_id", "bug_severity", "bug_status", "bug_when", "component_id", "creation_ts",
+     "delta_ts", "product_id", "resolution", "short_desc", "original_text", "text", "class"]]
 filtered.to_csv("./%s_filtered.csv" % db, encoding='utf-8', header=False)
 print('Saving dataframe')
 bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8', header=False)

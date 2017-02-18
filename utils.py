@@ -34,6 +34,11 @@ def fetchAndSaveDataframe(db):
 
     bug_dataframe['class'] = pd.Series(bug_dataframe.assigned_to.map(lambda x: classes.index(x)))
 
+    # reorder columns
+    bug_dataframe = bug_dataframe[
+        ["assigned_to", "bug_id", "bug_severity", "bug_status", "bug_when", "component_id", "creation_ts",
+         "delta_ts", "product_id", "resolution", "short_desc", "original_text", "text", "class"]]
+
     print('Saving dataframe')
     bug_dataframe.to_csv("./%s.csv" % db, encoding='utf-8')
 
