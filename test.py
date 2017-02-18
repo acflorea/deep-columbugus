@@ -64,32 +64,52 @@ def Doc2Vec(row, embeddings, word2id):
 bug_dataframe = loadDataframe(db)
 
 # go back in time "delta" days
-last_change = datetime.strptime(bug_dataframe['delta_ts'].max(), '%Y-%m-%d %H:%M:%S')
-oneMonthBack = (last_change + timedelta(days=-30)).strftime('%Y-%m-%d %H:%M:%S')
-twoMonthsBack = (last_change + timedelta(days=-60)).strftime('%Y-%m-%d %H:%M:%S')
-threeMonthsBack = (last_change + timedelta(days=-90)).strftime('%Y-%m-%d %H:%M:%S')
-break_at = (last_change + timedelta(days=-240)).strftime('%Y-%m-%d %H:%M:%S')
+last_change = datetime.strptime(bug_dataframe['delta_ts'].max(), '%Y-%m-%d %H:%M:%S').date()
+oneMonthBack = (last_change + timedelta(days=-30)).strftime('%Y-%m-%d')
+twoMonthsBack = (last_change + timedelta(days=-60)).strftime('%Y-%m-%d')
+threeMonthsBack = (last_change + timedelta(days=-90)).strftime('%Y-%m-%d')
+break_at = (last_change + timedelta(days=-240)).strftime('%Y-%m-%d')
 
-oneBackSeries = bug_dataframe[bug_dataframe['delta_ts'] > oneMonthBack].groupby('assigned_to').filter(
+oneBackSeries = bug_dataframe[bug_dataframe['bug_when'] > oneMonthBack].groupby('assigned_to').filter(
     lambda x: len(x) > 3).assigned_to.unique()
 twoBackSeries = bug_dataframe[
-    (bug_dataframe['delta_ts'] <= oneMonthBack) & (bug_dataframe['delta_ts'] > twoMonthsBack)].groupby(
+    (bug_dataframe['bug_when'] <= oneMonthBack) & (bug_dataframe['bug_when'] > twoMonthsBack)].groupby(
     'assigned_to').filter(lambda x: len(x) > 3).assigned_to.unique()
 threeBackSeries = bug_dataframe[
-    (bug_dataframe['delta_ts'] <= twoMonthsBack) & (bug_dataframe['delta_ts'] > threeMonthsBack)].groupby(
+    (bug_dataframe['bug_when'] <= twoMonthsBack) & (bug_dataframe['bug_when'] > threeMonthsBack)].groupby(
     'assigned_to').filter(lambda x: len(x) > 3).assigned_to.unique()
 
 validAssignees = reduce(np.intersect1d, (oneBackSeries, twoBackSeries, threeBackSeries)).tolist()
 
-counts = bug_dataframe[(bug_dataframe['delta_ts'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
+counts = bug_dataframe[
+    (bug_dataframe['bug_when'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
     'assigned_to').assigned_to.value_counts()
 threshold = 2 * counts.std() + counts.mean()
 
-filteredValidAssignees = bug_dataframe[(bug_dataframe['delta_ts'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
+print('Level 1 threshold ', threshold)
+
+filteredValidAssignees = bug_dataframe[
+    (bug_dataframe['bug_when'] > threeMonthsBack) & (bug_dataframe['assigned_to'].isin(validAssignees))].groupby(
+    'assigned_to').filter(lambda x: len(x) < threshold).assigned_to.unique().tolist()
+
+# - repeat ?!?
+
+filtered_bug_dataframe = bug_dataframe[
+    (bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
+filtered_bug_dataframe = filtered_bug_dataframe.sort('delta_ts')[0:len(filtered_bug_dataframe.index) / 10 * 9]
+
+counts = filtered_bug_dataframe \
+    .groupby('assigned_to').assigned_to.value_counts()
+threshold = 2 * counts.std() + counts.mean()
+
+print('Level 2 threshold ', threshold)
+
+filteredValidAssignees = filtered_bug_dataframe.groupby(
     'assigned_to').filter(lambda x: len(x) < threshold).assigned_to.unique().tolist()
 
 # keep only "recent" data
-filtered = bug_dataframe[(bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
+filtered = bug_dataframe[
+    (bug_dataframe['delta_ts'] > break_at) & (bug_dataframe['assigned_to'].isin(filteredValidAssignees))]
 
 print('Saving dataframe')
 filtered.to_csv("./%s_filtered.csv" % db, encoding='utf-8', header=False)

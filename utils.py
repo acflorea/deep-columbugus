@@ -5,9 +5,9 @@ import numpy as np
 
 # The database in use
 #  ==========================================================
-db = 'netbeansbugs'
+# db = 'netbeansbugs'
 # db = 'eclipsebugs'
-# db = 'firefoxbugs_new'
+db = 'firefoxbugs_new'
 
 # Global random generator seed
 #  ==========================================================

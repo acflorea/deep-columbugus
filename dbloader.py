@@ -107,12 +107,12 @@ def getBugDetails(db, bugIds=[], modifiedNoLaterThan='2000-01-01', withFullDescr
         with connection.cursor() as cursor:
             countSQL = "SELECT b.bug_id, b.creation_ts, b.short_desc, " \
                        "b.bug_status, ba.who as assigned_to, b.product_id, b.component_id, b.bug_severity, " \
-                       "b.resolution, ba.bug_when as delta_ts " \
+                       "b.resolution, b.delta_ts as delta_ts, ba.bug_when as bug_when " \
                        "FROM bugs b JOIN bugs_activity ba on b.bug_id = ba.bug_id " \
                        "and ba.added='FIXED' " \
                        "JOIN fielddefs fd on fd.id = ba.fieldid and fd.name = 'resolution' " \
                        "where " + resolutionFilter("b.") + \
-                       "AND ba.bug_when > %s " + \
+                       "AND b.delta_ts > %s " + \
                        "AND b.bug_id not in (select d.dupe from duplicates d) " \
                        "ORDER by b.bug_id"
 
@@ -126,7 +126,7 @@ def getBugDetails(db, bugIds=[], modifiedNoLaterThan='2000-01-01', withFullDescr
                     print "Current index is %d" % index
                 data_dict = {col: row[col] for col in
                              ['bug_id', 'creation_ts', 'short_desc', 'bug_status', 'assigned_to', 'product_id',
-                              'component_id', 'bug_severity', 'resolution', 'delta_ts']}
+                              'component_id', 'bug_severity', 'resolution', 'delta_ts', 'bug_when']}
                 short_desc = original_text = re.sub('\n', ' ', data_dict['short_desc'])
                 short_desc = re.sub('\r', '', original_text)
                 short_desc = re.sub('\t', ' ', original_text)
